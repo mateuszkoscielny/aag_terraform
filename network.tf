@@ -70,9 +70,10 @@ resource "azurerm_subnet_network_security_group_association" "demo" {
 }
 
 resource "azurerm_monitor_diagnostic_setting" "network" {
+  count              = var.enable_diagnostic ? 1 : 0
   name               = "${var.prefix}-${var.env_type}-network"
   target_resource_id = azurerm_virtual_network.demo.id
-  storage_account_id = var.storage_account_diag_id
+  storage_account_id = azurerm_storage_account.storage_account.id
 
   log {
     category = "VMProtectionAlerts"
@@ -92,16 +93,16 @@ resource "azurerm_monitor_diagnostic_setting" "network" {
   }
 }
 resource "azurerm_monitor_diagnostic_setting" "network_nsg" {
+  count              = var.enable_diagnostic ? 1 : 0
   name               = "${var.prefix}-${var.env_type}-vm-nsg"
   target_resource_id = azurerm_network_security_group.vm-nsg.id
-  storage_account_id = var.storage_account_diag_id
+  storage_account_id = azurerm_storage_account.storage_account.id
 
   log {
     category = "NetworkSecurityGroupEvent"
     enabled  = true
 
     retention_policy {
-      days = 0
       enabled = false
     }
   }
@@ -110,7 +111,6 @@ resource "azurerm_monitor_diagnostic_setting" "network_nsg" {
     enabled  = true
 
     retention_policy {
-      days = 0
       enabled = false
     }
   }

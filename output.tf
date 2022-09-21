@@ -8,9 +8,5 @@ output "demo_ag_public_ip" {
 }
 output "storage_account" {
   description = "Endpoint storage file"
-  value       = azurerm_private_endpoint.test
-}
-output "storage_account1" {
-  description = "Endpoint storage file"
-  value       = azurerm_private_endpoint.test.network_interface[0].id
+  value       = azurerm_storage_share.example.resource_manager_id
 }

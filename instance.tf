@@ -1,6 +1,6 @@
 # Bootstrapping Template File
 data "template_file" "nginx-vm-cloud-init" {
-  template = file("install-nginx.sh")
+  template = file("./install-nginx.sh")
 }
 
 resource "azurerm_linux_virtual_machine" "demo-instance" {
@@ -12,7 +12,7 @@ resource "azurerm_linux_virtual_machine" "demo-instance" {
   admin_username        = "demo"
   admin_ssh_key {
     username   = "demo"
-    public_key = file("./ssh_key/test.pub")
+    public_key = file("./ssh_key/vm.pub")
   }
   boot_diagnostics {}
   os_disk {
@@ -25,12 +25,34 @@ resource "azurerm_linux_virtual_machine" "demo-instance" {
     sku       = "18.04-LTS"
     version   = "latest"
   }
+  allow_extension_operations = true
+}
+
+resource "null_resource" "nginx_install" {
+
+  triggers = {
+    zabbix_proxy_host_id = azurerm_linux_virtual_machine.demo-instance.id
+  }
+
+  connection {
+    user        = azurerm_linux_virtual_machine.demo-instance.admin_username
+    private_key = file("./ssh_key/vm")
+    host        = azurerm_linux_virtual_machine.demo-instance.public_ip_address
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "sudo apt update -y",
+      "sudo apt -y install nginx",
+    ]
+  }
 }
 
 resource "azurerm_monitor_diagnostic_setting" "vm" {
+  count              = var.enable_diagnostic ? 1 : 0
   name               = "${var.prefix}-${var.env_type}-vm"
   target_resource_id = azurerm_linux_virtual_machine.demo-instance.id
-  storage_account_id = var.storage_account_diag_id
+  storage_account_id = azurerm_storage_account.storage_account.id
 
   metric {
     category = "AllMetrics"
@@ -73,16 +95,16 @@ resource "azurerm_public_ip" "ag_pip" {
 
 
 resource "azurerm_monitor_diagnostic_setting" "vm_pip" {
+  count              = var.enable_diagnostic ? 1 : 0
   name               = "${var.prefix}-${var.env_type}-vm-pip"
   target_resource_id = azurerm_public_ip.demo-instance.id
-  storage_account_id = var.storage_account_diag_id
+  storage_account_id = azurerm_storage_account.storage_account.id
 
   log {
     category = "DDoSProtectionNotifications"
     enabled  = false
 
     retention_policy {
-      days = 0
       enabled = false
     }
   }
@@ -91,16 +113,14 @@ resource "azurerm_monitor_diagnostic_setting" "vm_pip" {
     enabled  = false
 
     retention_policy {
-      days = 0
       enabled = false
     }
   }
-    log {
+  log {
     category = "DDoSMitigationReports"
     enabled  = false
 
     retention_policy {
-      days = 0
       enabled = false
     }
   }
@@ -108,22 +128,21 @@ resource "azurerm_monitor_diagnostic_setting" "vm_pip" {
     category = "AllMetrics"
 
     retention_policy {
-      days = 0
       enabled = false
     }
   }
 }
 resource "azurerm_monitor_diagnostic_setting" "ag_pip" {
+  count              = var.enable_diagnostic ? 1 : 0
   name               = "${var.prefix}-${var.env_type}-ag-pip"
   target_resource_id = azurerm_public_ip.ag_pip.id
-  storage_account_id = var.storage_account_diag_id
+  storage_account_id = azurerm_storage_account.storage_account.id
 
   log {
     category = "DDoSProtectionNotifications"
     enabled  = false
 
     retention_policy {
-      days = 0
       enabled = false
     }
   }
@@ -132,16 +151,14 @@ resource "azurerm_monitor_diagnostic_setting" "ag_pip" {
     enabled  = false
 
     retention_policy {
-      days = 0
       enabled = false
     }
   }
-    log {
+  log {
     category = "DDoSMitigationReports"
     enabled  = false
 
     retention_policy {
-      days = 0
       enabled = false
     }
   }
@@ -149,21 +166,20 @@ resource "azurerm_monitor_diagnostic_setting" "ag_pip" {
     category = "AllMetrics"
 
     retention_policy {
-      days = 0
       enabled = false
     }
   }
 }
 resource "azurerm_monitor_diagnostic_setting" "network_interface" {
+  count              = var.enable_diagnostic ? 1 : 0
   name               = "${var.prefix}-${var.env_type}-nic"
   target_resource_id = azurerm_network_interface.demo-instance.id
-  storage_account_id = var.storage_account_diag_id
-  
+  storage_account_id = azurerm_storage_account.storage_account.id
+
   metric {
     category = "AllMetrics"
 
     retention_policy {
-      days = 0
       enabled = false
     }
   }

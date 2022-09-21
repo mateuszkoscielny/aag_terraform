@@ -8,7 +8,7 @@ variable "prefix" {
 }
 variable "env_type" {
   type    = string
-  default = "demo"
+  default = "mkosdemo"
 }
 
 variable "ssh-source-address" {
@@ -68,7 +68,43 @@ variable "backend_address_pool" {
   type    = string
   default = "ag-waf-pool"
 }
-variable "storage_account_diag_id" {
-  type    = string
-  default = "/subscriptions/508b244a-ad76-4aa0-b3bb-27c348b54deb/resourceGroups/DefaultResourceGroup-NEU/providers/Microsoft.Storage/storageAccounts/northeustorageaccounmkos"
+variable "enable_diagnostic" {
+  description = "Whether to enable diagnostic settings"
+  default     = false
+  type        = bool
+}
+variable "enable_aag" {
+  description = "Whether to enable diagnostic settings"
+  default     = false
+  type        = bool
+}
+variable "service_bus_namespaces" {
+  description = "Names of storage accounts. If null none will be created"
+  type        = list(map(string))
+  default = [
+    {
+      type = "internal"
+      name = "mkosdemo"
+    }
+  ]
+}
+variable "service_bus_sku" {
+  description = "SKU to be used by ASB"
+  type        = string
+  default     = "Standard"
+}
+variable "diag_retention_days" {
+  description = "Number of days for the retention period of diagnostic setting files"
+  type        = string
+  default     = "365"
+}
+variable "private_zone" {
+  description = "private zone name"
+  type        = string
+  default     = "terraform.devopstraining.pl"
+}
+variable "cert_pass" {
+  description = "certificate password"
+  type        = string
+
 }
