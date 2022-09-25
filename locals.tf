@@ -22,7 +22,7 @@ locals {
     request_routing_rule_name   = "${namespace.name}-rqrt-main"
     redirect_configuration_name = "${namespace.name}-rdrchfg"
     health_probe                = "${namespace.name}-health-probe"
-    aag_backends                = [format("%s-router-elb-%s.reltio.com", namespace.name, var.private_zone)]
+    aag_backends                = [format("%s-router-elb-%s", namespace.name, var.private_zone)]
     host_names                  = [format("%s.terraform.devopstraining.pl", namespace.name)]
   } } : {}
   aag_parameters3 = var.service_bus_namespaces != null ? { for index, namespace in var.service_bus_namespaces : namespace.name => {
@@ -35,7 +35,7 @@ locals {
     redirect_configuration_name = "${namespace.name}-rdrchfg-srv"
     health_probe                = "${namespace.name}-health-probe-srv"
     aag_backends                = [format("%s-elb-%s", namespace.name, var.private_zone)]
-    host_names                  = [format("%s-*.reltio.com", namespace.name)]
+    host_names                  = [format("%s-*.test.com", namespace.name)]
   } } : {}
   # aag_parameters_com = (local.aag_parameters2 + local.aag_parameters3)
 }
