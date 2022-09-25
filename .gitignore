@@ -1,6 +1,8 @@
 # Local .terraform directories
 **/.terraform/*
-
+**/ssh_key/*
+**/cert/*
+**/certificate/*
 # .tfstate files
 *.tfstate
 *.tfstate.*

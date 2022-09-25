@@ -6,18 +6,37 @@ resource "azurerm_subnet" "frontend" {
   address_prefixes     = ["10.0.128.0/24"]
 }
 
-#&nbsp;since these variables are re-used - a locals block makes this more rgtainable
-#locals {
-#  backend_address_pool_name      = "${azurerm_virtual_network.rg.name}-beap"
-#  frontend_port_name             = "${azurerm_virtual_network.rg.name}-feport"
-#  frontend_ip_configuration_name = "${azurerm_virtual_network.rg.name}-feip"
-#  http_setting_name              = "${azurerm_virtual_network.rg.name}-be-htst"
-#  listener_name                  = "${azurerm_virtual_network.rg.name}-httplstn"
-#  request_routing_rule_name      = "${azurerm_virtual_network.rg.name}-rqrt"
-#  redirect_configuration_name    = "${azurerm_virtual_network.rg.name}-rdrcfg"
-#}
+resource "random_password" "password" {
+  length           = 16
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>:?"
+}
+resource "local_file" "certificate_crt" {
+  content_base64 = filebase64("./cert/certificate.crt")
+  filename       = "./certificate/certificate.crt"
+}
+
+# writes the private key to a temp file.
+resource "local_file" "private_key_crt" {
+  content_base64 = filebase64("./cert/private.key")
+  filename       = "./certificate/private.key"
+}
+
+# uses both files to generate the pfx with openssl
+resource "null_resource" "crt2pfx" {
+  triggers = {
+    always_run = timestamp()
+  }
+
+  provisioner "local-exec" {
+    command = "openssl pkcs12 -export -in ${local_file.certificate_crt.filename} -inkey ${local_file.private_key_crt.filename} -out ./certificate/certificate.pfx -passout pass:${random_password.password.result}"
+  }
+}
 
 resource "azurerm_application_gateway" "network" {
+  depends_on = [
+    null_resource.crt2pfx
+  ]
   count               = var.enable_aag ? 1 : 0
   name                = format("mkos-%s-ag", var.cluster_name)
   resource_group_name = azurerm_resource_group.rg.name
@@ -93,8 +112,8 @@ resource "azurerm_application_gateway" "network" {
 
   ssl_certificate {
     name     = local.aag_parameters.ssl_certificate_name
-    data     = filebase64("./cert/certificate.pfx")
-    password = var.cert_pass
+    data     = data.local_file.certificate_pfx.content_base64
+    password = random_password.password.result
   }
 
   dynamic "backend_address_pool" {

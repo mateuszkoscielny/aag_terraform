@@ -85,6 +85,10 @@ variable "service_bus_namespaces" {
     {
       type = "internal"
       name = "mkosdemo"
+    },
+    {
+      type = "internal"
+      name = "mkosdemos"
     }
   ]
 }
@@ -102,9 +106,4 @@ variable "private_zone" {
   description = "private zone name"
   type        = string
   default     = "terraform.devopstraining.pl"
-}
-variable "cert_pass" {
-  description = "certificate password"
-  type        = string
-
 }

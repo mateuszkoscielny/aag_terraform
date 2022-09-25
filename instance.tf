@@ -46,6 +46,9 @@ resource "null_resource" "nginx_install" {
       "sudo apt -y install nginx",
     ]
   }
+  depends_on = [
+    azurerm_linux_virtual_machine.demo-instance
+  ]
 }
 
 resource "azurerm_monitor_diagnostic_setting" "vm" {
